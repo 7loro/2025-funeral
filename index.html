@@ -34,7 +34,7 @@
 <body class="bg-gray-100">
 
     <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
-        <!-- [MODIFIED] Header layout changed to flexbox for responsiveness -->
+        <!-- Header layout changed to flexbox for responsiveness -->
         <header class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
             <div class="text-center sm:text-left">
                 <h1 class="text-3xl md:text-4xl font-bold text-gray-800">장례 비용 정산</h1>
@@ -136,12 +136,13 @@
                         <span id="condolence-count" class="text-sm font-medium text-gray-600"></span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table id="condolence-table" class="w-full min-w-[500px] text-sm">
+                        <!-- [MODIFIED] Removed min-width and adjusted column widths for better mobile view -->
+                        <table id="condolence-table" class="w-full text-sm">
                             <thead class="font-bold">
                                 <tr>
                                     <th class="w-1/12 text-center">번호</th>
-                                    <th class="w-7/12">보낸 사람</th>
-                                    <th class="w-4/12 text-right">금액 (원)</th>
+                                    <th class="w-6/12">보낸 사람</th>
+                                    <th class="w-5/12 text-right">금액 (원)</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
