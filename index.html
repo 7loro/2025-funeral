@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>외할머니 장례 비용 정산</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        /* 활성 탭 스타일 */
+        .tab-active {
+            border-color: #4f46e5;
+            color: #4f46e5;
+            font-weight: 700;
+        }
+        /* 테이블 스타일 */
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        thead th {
+            background-color: #f3f4f6;
+            border-bottom-width: 2px;
+        }
+        tbody tr:last-child td {
+            border-bottom: 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
+        <header class="text-center mb-8 relative">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">장례 비용 정산</h1>
+            <p class="text-gray-500 mt-2">오차가 있을 수 있으니 감안해주세요</p>
+            <!-- 엑셀 다운로드 버튼 추가 -->
+            <div class="absolute top-0 right-0 mt-2 sm:mt-0">
+                <a href="" download
+                   class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
+                    엑셀 다운로드
+                </a>
+            </div>
+        </header>
+
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-3">종합 정산</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <p class="text-lg font-semibold text-blue-800">총 수입</p>
+                    <p id="total-income" class="text-2xl font-bold text-blue-600"></p>
+                </div>
+                <div class="bg-red-50 p-4 rounded-lg">
+                    <p class="text-lg font-semibold text-red-800">총 지출</p>
+                    <p id="total-expense" class="text-2xl font-bold text-red-600"></p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-lg font-semibold text-green-800">정산 차액</p>
+                    <p id="balance" class="text-2xl font-bold text-green-600"></p>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t text-center">
+                <p class="text-lg font-semibold text-gray-700">남은 현금</p>
+                <p id="remaining-cash" class="text-2xl font-bold text-gray-800"></p>
+            </div>
+        </div>
+
+        <!-- 탭 메뉴 -->
+        <div class="mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                    <button onclick="changeTab('summary')" class="tab tab-active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        수입/지출 상세
+                    </button>
+                    <button onclick="changeTab('condolences')" class="tab whitespace-nowrap py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
+                        부조금 목록
+                    </button>
+                    <button onclick="changeTab('wreaths')" class="tab whitespace-nowrap py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
+                        화환 목록
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- 탭 콘텐츠 -->
+        <div id="tab-content">
+            <!-- 수입/지출 상세 탭 -->
+            <div id="summary-content">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- 수입 내역 -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">수입 내역</h3>
+                        <table id="income-table" class="w-full text-sm">
+                            <thead class="font-bold">
+                                <tr>
+                                    <th>항목</th>
+                                    <th class="text-right">금액 (원)</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <!-- 지출 내역 -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">지출 내역</h3>
+                        <table id="expense-table" class="w-full text-sm">
+                            <thead class="font-bold">
+                                <tr>
+                                    <th>항목</th>
+                                    <th class="text-right">금액 (원)</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- 찬조 내역 -->
+                <div class="mt-8 bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">찬조 내역</h3>
+                    <ul class="space-y-3 text-gray-700 list-disc list-inside">
+                        <li>모모도시락 (장지 점심) - 대구 앞집 첫째 결제</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 부조금 목록 탭 -->
+            <div id="condolences-content" class="hidden">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
+                        <h3 class="text-xl font-bold text-gray-800">부조금 목록</h3>
+                        <span id="condolence-count" class="text-sm font-medium text-gray-600"></span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="condolence-table" class="w-full min-w-[500px] text-sm">
+                            <thead class="font-bold">
+                                <tr>
+                                    <th class="w-1/12 text-center">번호</th>
+                                    <th class="w-7/12">보낸 사람</th>
+                                    <th class="w-4/12 text-right">금액 (원)</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 화환 목록 탭 -->
+            <div id="wreaths-content" class="hidden">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
+                        <h3 class="text-xl font-bold text-gray-800">화환 목록</h3>
+                        <span id="wreath-count" class="text-sm font-medium text-gray-600"></span>
+                    </div>
+                    <div id="wreath-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                        <!-- 화환 목록이 동적으로 채워집니다 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 데이터
+        const incomeData = [
+            { item: '현금 인출액', amount: 10000000 },
+            { item: '부조금 총액', amount: 10350000 }
+        ];
+
+        const expenseData = [
+            { item: '장례식장 결제', amount: 12048000 },
+            { item: '도우미 아주머니', amount: 300000 },
+            { item: '상복대여비', amount: 395000 },
+            { item: '입관 노잣돈', amount: 130000 },
+            { item: '사망진단서', amount: 160000 },
+            { item: '포크레인+인부비', amount: 2450000 },
+            { item: '마지막날 편의점 물 및 음료 (기웅)', amount: 50000 },
+            { item: '마지막날 커피랑 음료 (경희)', amount: 140000 },
+            { item: '장례식장에서 쓴 교통비 기록 된 것', amount: 2730000 },
+        ];
+
+        const condolenceData = [
+            { sender: '남세훈', amount: 100000 },
+            { sender: '신상규', amount: 50000 },
+            { sender: '윤신찬', amount: 100000 },
+            { sender: '조카 남효우', amount: 200000 },
+            { sender: '도계리 최종운', amount: 100000 },
+            { sender: '동안동현대서비스 대표 김영건', amount: 100000 },
+            { sender: '부산 손영현', amount: 100000 },
+            { sender: '부산 김종섭', amount: 50000 },
+            { sender: '이관주', amount: 500000 },
+            { sender: '부산 강용석', amount: 100000 },
+            { sender: '야성초 15 조성민', amount: 100000 },
+            { sender: '부산 황진식', amount: 100000 },
+            { sender: '김해 장유 최준택', amount: 50000 },
+            { sender: '덕곡1리 최석달', amount: 200000 },
+            { sender: '최종백', amount: 300000 },
+            { sender: '남효중', amount: 200000 },
+            { sender: '영덕읍 최청자', amount: 50000 },
+            { sender: '부산 김용희 (이용수)', amount: 100000 },
+            { sender: '압량동협조합장 이성관', amount: 100000 },
+            { sender: '포스코 최경택', amount: 100000 },
+            { sender: '최문택', amount: 100000 },
+            { sender: '최형택', amount: 100000 },
+            { sender: '남효억', amount: 100000 },
+            { sender: '대구 28/43 동기 이종철', amount: 100000 },
+            { sender: '상직리 김갑열', amount: 100000 },
+            { sender: '상직리 김두열', amount: 100000 },
+            { sender: '우곡 초석봉', amount: 50000 },
+            { sender: '영덕 최종수', amount: 50000 },
+            { sender: '최은희', amount: 200000 },
+            { sender: '울산 최필희', amount: 100000 },
+            { sender: '최해선', amount: 100000 },
+            { sender: '김태경', amount: 100000 },
+            { sender: '최성구', amount: 100000 },
+            { sender: '2843회 김유연', amount: 100000 },
+            { sender: '한창섭', amount: 100000 },
+            { sender: '이현구', amount: 100000 },
+            { sender: '신상오', amount: 50000 },
+            { sender: '포항 약국 남병관', amount: 100000 },
+            { sender: '남명희', amount: 100000 },
+            { sender: '서울 남효응', amount: 200000 },
+            { sender: '부산 박지훈', amount: 100000 },
+            { sender: '부산 황호원', amount: 200000 },
+            { sender: '김산', amount: 200000 },
+            { sender: '김두진', amount: 100000 },
+            { sender: '부산 황준걸', amount: 100000 },
+            { sender: '영덕군 영덕읍 우곡리 최종한', amount: 50000 },
+            { sender: '이희진', amount: 100000 },
+            { sender: '최선정 이상우', amount: 100000 },
+            { sender: '안동 유덕호', amount: 200000 },
+            { sender: '대구 최용택', amount: 200000 },
+            { sender: '(식률) 남효걸', amount: 100000 },
+            { sender: '대구 최병규', amount: 100000 },
+            { sender: '지엠네트웍스 이원희', amount: 50000 },
+            { sender: '지엠네트웍스 김현진', amount: 50000 },
+            { sender: '지엠네트웍스 곽경철', amount: 50000 },
+            { sender: '영덕 신동순', amount: 200000 },
+            { sender: '지엠네트웍스 이점심', amount: 100000 },
+            { sender: '신두기', amount: 200000 },
+            { sender: '신무기', amount: 100000 },
+            { sender: '신정자', amount: 50000 },
+            { sender: '지엠네트웍스 김상우', amount: 100000 },
+            { sender: '군항렌트카 김귀동', amount: 500000 },
+            { sender: '김순락 오남매', amount: 500000 },
+            { sender: '포스코 정철호', amount: 100000 },
+            { sender: '강문봉', amount: 100000 },
+            { sender: '남종희 남매일동', amount: 800000 },
+            { sender: '최원택', amount: 100000 },
+            { sender: '최현수', amount: 100000 },
+            { sender: '부산 덕천동 최성남', amount: 50000 },
+            { sender: '부산 덕천동 최성민', amount: 100000 },
+            { sender: '최종호', amount: 300000 },
+            { sender: '최종국', amount: 300000 },
+            { sender: '달산대지1리 이만석', amount: 100000 },
+            { sender: '효요양병원', amount: 100000 }
+        ];
+
+        const wreathData = [
+            '삼성전자 전영현', '인도네시아 외손녀 류미진', '카카오픽코마 한국지사 류병길',
+            '포철공고 10회 동기회', '유창씨엔티 대표이사 박봉수', '한국지엠구미서비스센터',
+            '한국쓰리엠 연구소 상조회', '창신INC 대표이사 남충일', '세기 임직원 일동',
+            '그린산업 대표이사 이기욱', '세기 노동조합 일동', '대구기계공구상협동조합 이사장 김광식',
+            '부산지역버스노동조합 시민지부일동', '신명기업 대표 김성규', '덕우회',
+            '재구 28/43 동기회 일동', '피엔디티 대표이사 이재성', '남해화학 포항대리점 대표 김종욱',
+            '야성초등 15회 동기 일동', '서울교통공사 사장 백호', '지엠네트웍스 대표이사 이현찬',
+            '세원바이오 대표이사 신정욱', '동안동현대서비스 대표이사 김영건', '한국지엠북포항서비스센터 대표 황재한',
+            '한국지엠남대구서비스센터 임직원 일동'
+        ];
+
+        const remainingCashData = 1880000;
+
+        // 숫자 포맷 함수 (세 자리마다 콤마)
+        function formatNumber(num) {
+            return new Intl.NumberFormat('ko-KR').format(num);
+        }
+
+        // 총계 계산 및 표시
+        function calculateTotals() {
+            const totalIncome = incomeData.reduce((sum, item) => sum + item.amount, 0);
+            const totalExpense = expenseData.reduce((sum, item) => sum + item.amount, 0);
+            const balance = totalIncome - totalExpense;
+
+            document.getElementById('total-income').textContent = formatNumber(totalIncome) + '원';
+            document.getElementById('total-expense').textContent = formatNumber(totalExpense) + '원';
+            document.getElementById('balance').textContent = formatNumber(balance) + '원';
+            document.getElementById('remaining-cash').textContent = formatNumber(remainingCashData) + '원';
+        }
+
+        // 테이블 생성 함수 (번호 포함)
+        function populateNumberedTable(tableId, data, columns) {
+            const tableBody = document.querySelector(`#${tableId} tbody`);
+            tableBody.innerHTML = ''; // 기존 내용 초기화
+            data.forEach((rowData, index) => {
+                const row = document.createElement('tr');
+                
+                // 번호 셀 추가
+                const numberCell = document.createElement('td');
+                numberCell.textContent = index + 1;
+                numberCell.className = 'text-center text-gray-500';
+                row.appendChild(numberCell);
+
+                columns.forEach(column => {
+                    const cell = document.createElement('td');
+                    let content = rowData[column.key] || '-';
+                    if (column.type === 'number') {
+                        cell.classList.add('text-right');
+                        content = formatNumber(content);
+                    }
+                    cell.textContent = content;
+                    row.appendChild(cell);
+                });
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // 총계 테이블 생성
+        function populateTotalTable(tableId, data) {
+            const tableBody = document.querySelector(`#${tableId} tbody`);
+            tableBody.innerHTML = '';
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.item}</td>
+                    <td class="text-right">${formatNumber(item.amount)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            const total = data.reduce((sum, item) => sum + item.amount, 0);
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'font-bold border-t-2 border-gray-400 bg-gray-50';
+            totalRow.innerHTML = `
+                <td>합계</td>
+                <td class="text-right">${formatNumber(total)}</td>
+            `;
+            tableBody.appendChild(totalRow);
+        }
+
+
+        // 화환 목록 생성 (번호 포함)
+        function populateWreathList() {
+            const listContainer = document.getElementById('wreath-list');
+            listContainer.innerHTML = '';
+            wreathData.forEach((sender, index) => {
+                const item = document.createElement('div');
+                item.className = 'bg-gray-50 p-3 rounded-lg shadow-sm text-left';
+                item.innerHTML = `<span class="font-semibold text-gray-600">${index + 1}.</span> ${sender}`;
+                listContainer.appendChild(item);
+            });
+            document.getElementById('wreath-count').textContent = `총 ${wreathData.length}개`;
+        }
+        
+        // 부조금 목록 카운트
+        function setCondolenceCount() {
+            document.getElementById('condolence-count').textContent = `총 ${condolenceData.length}건`;
+        }
+
+        // 탭 전환 함수
+        function changeTab(tabName) {
+            const contents = ['summary-content', 'condolences-content', 'wreaths-content'];
+            const tabs = document.querySelectorAll('.tab');
+
+            contents.forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            tabs.forEach(tab => {
+                tab.classList.remove('tab-active');
+                tab.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                tab.classList.remove('border-indigo-500', 'text-indigo-600');
+            });
+
+            document.getElementById(`${tabName}-content`).classList.remove('hidden');
+            const activeTab = document.querySelector(`button[onclick="changeTab('${tabName}')"]`);
+            activeTab.classList.add('tab-active');
+            activeTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+        }
+
+        // 페이지 로드 시 초기화
+        window.onload = function() {
+            calculateTotals();
+            
+            populateTotalTable('income-table', incomeData);
+            populateTotalTable('expense-table', expenseData);
+
+            populateNumberedTable('condolence-table', condolenceData, [
+                { key: 'sender' },
+                { key: 'amount', type: 'number' }
+            ]);
+            setCondolenceCount();
+            populateWreathList();
+        };
+
+    </script>
+</body>
+</html>
